@@ -22,7 +22,7 @@ const GenerateImages = () => {
     e.preventDefault();
     // TODO: Replace with your API call
     const fakeImage =
-      "https://res.cloudinary.com/drv22apr4/image/upload/v1745740847/woru0i5zk6utm2yscwcu.jpg";
+      "https://res.cloudinary.com/drv22apr4/image/upload/v1745739610/e9gjnx6a3krllvhgmpgg.jpg";
     setGeneratedImage(fakeImage);
   };
 

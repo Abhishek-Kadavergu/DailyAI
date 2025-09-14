@@ -20,3 +20,4 @@ CREATE INDEX IF NOT EXISTS idx_creations_type ON creations(type);
 
 -- Create an index on created_at for sorting
 CREATE INDEX IF NOT EXISTS idx_creations_created_at ON creations(created_at);
+

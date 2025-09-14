@@ -27,3 +27,4 @@ async function testPremiumUser() {
 
 // Run the test
 testPremiumUser().catch(console.error);
+

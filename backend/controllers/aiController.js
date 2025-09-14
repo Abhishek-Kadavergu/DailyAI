@@ -20,12 +20,12 @@ export const generateArticle = async (req, res) => {
     const plan = req.plan;
     const free_usage = req.free_usage;
 
-    if (plan != "premium" && free_usage >= 10) {
-      return res.json({
-        success: false,
-        message: "Limit exceeded. Upgrade to continue.",
-      });
-    }
+    // if (plan != "premium" && free_usage >= 10) {
+    //   return res.json({
+    //     success: false,
+    //     message: "Limit exceeded. Upgrade to continue.",
+    //   });
+    // }
     const response = await openai.chat.completions.create({
       model: "gemini-2.0-flash",
       messages: [

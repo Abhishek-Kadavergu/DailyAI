@@ -1,5 +1,6 @@
 import { Edit, Sparkle } from "lucide-react";
 import React, { useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 const articleLength = [
   { length: 800, text: "Short (500-800 words)" },
   { length: 1200, text: "Short (800-1200 words)" },
@@ -9,8 +10,45 @@ const articleLength = [
 const WriteArticls = () => {
   const [selectedLength, setSelectedLength] = useState(articleLength[0]);
   const [input, setInput] = useState("");
+  const [generatedArticle, setGeneratedArticle] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { getToken } = useAuth();
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+    if (!input.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const token = await getToken();
+      const response = await fetch(
+        "http://localhost:4000/api/ai/generate-article",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            prompt: input,
+            length: selectedLength.length,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setGeneratedArticle(data.content);
+      } else {
+        alert(data.message || "Failed to generate article");
+      }
+    } catch (error) {
+      console.error("Error generating article:", error);
+      alert("Failed to generate article. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <div className="h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 text-slate-700">
@@ -49,9 +87,13 @@ const WriteArticls = () => {
           ))}
         </div>
         <br />
-        <button className=" flex w-full justify-center gap-2 bg-gradient-to-r from-[#226BFF] to-[#65ADFF] text-white px-4 py-2 mt-6 text-sm rounded-lg cursor-pointer">
-          <Edit className="mx-4  " />
-          Generate Article
+        <button
+          type="submit"
+          disabled={isLoading || !input.trim()}
+          className="flex w-full justify-center gap-2 bg-gradient-to-r from-[#226BFF] to-[#65ADFF] text-white px-4 py-2 mt-6 text-sm rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Edit className="mx-4" />
+          {isLoading ? "Generating..." : "Generate Article"}
         </button>
       </form>
 
@@ -62,10 +104,16 @@ const WriteArticls = () => {
           <h1 className="text-xl font-semibold">Generated Article</h1>
         </div>
         <div className="flex-1 flex justify-center items-center">
-          <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
-            <Edit className="w-9 h-9" />
-            <p>Enter a topic and click "Generate Topic" to get started</p>
-          </div>
+          {generatedArticle ? (
+            <div className="w-full h-full p-4 text-sm text-gray-700 whitespace-pre-wrap overflow-y-auto">
+              {generatedArticle}
+            </div>
+          ) : (
+            <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
+              <Edit className="w-9 h-9" />
+              <p>Enter a topic and click "Generate Article" to get started</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -93,7 +93,7 @@ const GenerateImages = () => {
       setError(error.message || "Network error. Using fallback image.");
       // Fallback to demo image
       const fallbackImage =
-        "https://res.cloudinary.com/drv22apr4/image/upload/v1745739610/e9gjnx6a3krllvhgmpgg.jpg";
+        "https://res.cloudinary.com/drv22apr4/image/upload/v1757847113/ai-images/ymmvdzuxewddczhnqwnu.png";
       setGeneratedImage(fallbackImage);
     } finally {
       setIsLoading(false);
@@ -211,34 +211,16 @@ const GenerateImages = () => {
 
         <div className="flex-1 flex flex-col justify-center items-center">
           {isLoading ? (
-            <div className="flex flex-col items-center gap-6">
-              <div className="relative">
-                <div className="w-32 h-32 border-4 border-gray-200 rounded-full animate-pulse"></div>
-                <div className="absolute inset-0 w-32 h-32 border-4 border-green-500 rounded-full animate-spin border-t-transparent"></div>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-gray-700 mb-2">
-                  Creating your masterpiece...
-                </p>
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-2 h-2 bg-green-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 bg-green-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
-                </div>
-              </div>
+            <div className="text-sm flex flex-col items-center gap-5">
+              <div className="animate-spin rounded-full h-9 w-9 border-b-2 border-[#4A7AFF]"></div>
+              <p>Generating creative images...</p>
             </div>
           ) : generatedImage ? (
-            <div className="flex flex-col items-center  gap-4 animate-fadeIn">
+            <div className="flex flex-col items-center gap-4 mt-4 animate-fadeIn">
               <img
-                className="p-8  w-full"
                 src={generatedImage}
-                alt="generated image from backend"
+                alt="Generated"
+                className="max-w-full max-h-120 rounded-md border shadow-lg object-contain"
               />
             </div>
           ) : (

@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import axios from "axios";
 import fs from "fs";
 import pdf from "pdf-parse/lib/pdf-parse.js";
+import mammoth from "mammoth";
 import { v2 as cloudinary } from "cloudinary";
 import FormData from "form-data";
 dotenv.config();
@@ -134,6 +135,9 @@ export const generateImage = async (req, res) => {
   try {
     const { userId } = req.auth;
     const { prompt, publish } = req.body;
+    
+    // Convert publish to boolean early
+    const publishStatus = publish === "true" || publish === true;
 
     const formData = new FormData();
     formData.append("prompt", prompt);
@@ -164,17 +168,23 @@ export const generateImage = async (req, res) => {
     const secure_url = uploadResult.secure_url;
     console.log("✅ Secure URL:", secure_url);
 
-    // Save to database
+    // Save to database with publish status
     try {
-      await sql`insert into creations(user_id, prompt, content, type) 
-        values(${userId}, ${prompt}, ${secure_url}, ${"image"})`;
-      console.log("✅ Image saved to database successfully");
+      await sql`insert into creations(user_id, prompt, content, type, publish) 
+        values(${userId}, ${prompt}, ${secure_url}, ${"image"}, ${publishStatus})`;
+      console.log("✅ Image saved to database successfully", {
+        publish: publishStatus,
+      });
     } catch (dbError) {
       console.error("❌ Database error:", dbError);
     }
 
-    console.log("🚀 Sending response:", { success: true, secure_url });
-    res.json({ success: true, secure_url });
+    console.log("🚀 Sending response:", {
+      success: true,
+      secure_url,
+      publish: publishStatus,
+    });
+    res.json({ success: true, secure_url, publish: publishStatus });
   } catch (error) {
     console.error("Generate image error:", error);
     res.json({ success: false, message: error.message });
@@ -254,6 +264,7 @@ export const reviewResume = async (req, res) => {
     const { userId } = req.auth;
     const resume = req.file;
     const plan = req.plan;
+    console.log(resume);
 
     if (!resume) {
       return res.json({ success: false, message: "No resume uploaded" });
@@ -266,20 +277,52 @@ export const reviewResume = async (req, res) => {
       });
     }
 
-    // Read PDF file
-    const dataBuffer = fs.readFileSync(resume.path);
-    const pdfData = await pdf(dataBuffer);
+    let resumeText = "";
+
+    // Check file type and extract text accordingly
+    if (resume.mimetype === "application/pdf") {
+      // Handle PDF files
+      const dataBuffer = fs.readFileSync(resume.path);
+      const pdfData = await pdf(dataBuffer);
+      resumeText = pdfData.text;
+      console.log("PDF text extracted:", resumeText.substring(0, 200) + "...");
+    } else if (
+      resume.mimetype ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      resume.mimetype === "application/msword"
+    ) {
+      // Handle DOCX/DOC files
+      const dataBuffer = fs.readFileSync(resume.path);
+      const docxResult = await mammoth.extractRawText({ buffer: dataBuffer });
+      resumeText = docxResult.value;
+      console.log("DOCX text extracted:", resumeText.substring(0, 200) + "...");
+    } else {
+      return res.json({
+        success: false,
+        message: "Unsupported file format. Please upload a PDF or DOCX file.",
+      });
+    }
+
+    if (!resumeText || resumeText.trim().length === 0) {
+      return res.json({
+        success: false,
+        message:
+          "Could not extract text from the uploaded file. Please ensure the file contains readable text.",
+      });
+    }
 
     // Build prompt
-    const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses, and areas of improvement:\n\n${pdfData.text}`;
+    const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses, and areas of improvement within 1700 max token:\n\n${resumeText}`;
 
     // Call Gemini/OpenAI
     const response = await openai.chat.completions.create({
       model: "gemini-2.0-flash",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 1700,
     });
+
+    console.log(response);
 
     const content = response.choices[0].message.content;
 
@@ -288,6 +331,7 @@ export const reviewResume = async (req, res) => {
       values(${userId}, ${"Review the uploaded resume"}, ${content}, ${"resume-review"})`;
 
     res.json({ success: true, content });
+    console.log(content);
   } catch (error) {
     console.error("❌ Resume Review Error:", error.message);
     res.json({ success: false, message: error.message });

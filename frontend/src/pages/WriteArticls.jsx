@@ -113,8 +113,24 @@ const WriteArticls = () => {
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 mt-3 overflow-y-auto text-sm text-slate-600 whitespace-pre-wrap break-words">
-          {generatedArticle ? (
+        <div className="flex-1 mt-3 overflow-y-auto text-sm items-center text-slate-600 whitespace-pre-wrap break-words">
+          {isLoading ? (
+            <div className="flex flex-1 w-full h-full flex-col items-center justify-center gap-5">
+              <div className="animate-spin rounded-full h-9 w-9 border-b-2 border-[#4A7AFF]"></div>
+              <p>Generating Article...</p>
+            </div>
+          ) : generatedArticle ? (
+            <div className=".reset-tw">
+              <ReactMarkdown>{generatedArticle}</ReactMarkdown>
+            </div>
+          ) : (
+            <div className="flex w-full h flex-col items-center justify-center flex-1 h-full gap-5 text-gray-400">
+              <Edit className="w-9 h-9" />
+              <p>Enter a topic and click "Generate Article" to get started</p>
+            </div>
+          )}
+
+          {/* {generatedArticle ? (
             <div className=".reset-tw">
               <ReactMarkdown>{generatedArticle}</ReactMarkdown>
             </div> // wrap in a div for safety
@@ -123,7 +139,7 @@ const WriteArticls = () => {
               <Edit className="w-9 h-9" />
               <p>Enter a topic and click "Generate Article" to get started</p>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

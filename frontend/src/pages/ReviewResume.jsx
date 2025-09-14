@@ -1,12 +1,57 @@
+import { useAuth } from "@clerk/clerk-react";
+import axios from "axios";
 import { FileText, Sparkle } from "lucide-react";
 import React, { useState } from "react";
+import ReactMarkdown from "react-markdown";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const ReviewResume = () => {
   const [resumeFile, setResumeFile] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const { getToken } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState("");
+  const [error, setError] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
 
   const onFileChange = (e) => {
-    setResumeFile(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) {
+      setResumeFile(file);
+      setError(null);
+    }
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      const allowedTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword",
+      ];
+
+      if (allowedTypes.includes(file.type)) {
+        setResumeFile(file);
+        setError(null);
+      } else {
+        setError("Please upload a PDF or DOCX file only.");
+      }
+    }
   };
 
   const onSubmitHandler = async (e) => {
@@ -16,21 +61,38 @@ const ReviewResume = () => {
       alert("Please upload your resume (PDF only).");
       return;
     }
+    setIsLoading(true);
+    setAnalysisResult(null);
+    try {
+      console.log("process started");
+      const token = await getToken();
+      const formData = new FormData();
+      formData.append("resume", resumeFile);
 
-    console.log("Uploaded Resume:", resumeFile);
-
-    // Placeholder: Call your API here
-    // Example:
-    // const formData = new FormData();
-    // formData.append("resume", resumeFile);
-    // const res = await fetch("/api/review-resume", { method: "POST", body: formData });
-    // const data = await res.json();
-    // setAnalysisResult(data);
-
-    // Mock response
-    setAnalysisResult(
-      "Your resume is strong! Add more details about projects."
-    );
+      console.log(resumeFile);
+      const response = await axios.post(
+        `${BASE_URL}/api/ai/review-resume`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = response.data;
+      console.log("response from the backend", data);
+      if (data.success && data.content) {
+        setAnalysisResult(data.content);
+        setIsLoading(false);
+      } else {
+        console.log(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      alert("Failed to generate article. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -61,7 +123,7 @@ const ReviewResume = () => {
           className="flex w-full justify-center gap-2 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 mt-6 text-sm rounded-lg cursor-pointer"
         >
           <FileText className="mx-4" />
-          Review Resume
+          {isLoading ? "Reviewing Resume..." : "Review Resume"}
         </button>
       </form>
 
@@ -72,10 +134,10 @@ const ReviewResume = () => {
           <h1 className="text-xl font-semibold">Analysis Results</h1>
         </div>
 
-        <div className="flex-1 flex justify-center items-center">
+        <div className="flex-1 mt-3 overflow-y-auto text-sm text-slate-600 whitespace-pre-wrap break-words">
           {analysisResult ? (
-            <div className="text-sm text-gray-700 whitespace-pre-wrap">
-              {analysisResult}
+            <div className=".reset-tw">
+              <ReactMarkdown>{analysisResult}</ReactMarkdown>
             </div>
           ) : (
             <div className="text-sm flex flex-col items-center gap-5 text-gray-400">

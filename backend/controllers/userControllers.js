@@ -13,10 +13,16 @@ export const getUserCreations = async (req, res) => {
 };
 export const getPublishedCreations = async (req, res) => {
   try {
-    const creations =
-      await sql`SELECT * FROM creations WHERE publish = true ORDER BY created_at DESC`;
+    const creations = await sql`
+      SELECT * FROM creations 
+      WHERE publish = true 
+      ORDER BY created_at DESC
+    `;
+    
+    console.log("✅ Published creations fetched:", creations.length);
     res.json({ success: true, creations });
   } catch (error) {
+    console.error("❌ Error fetching published creations:", error);
     res.json({ success: false, message: error.message });
   }
 };

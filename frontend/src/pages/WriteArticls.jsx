@@ -1,6 +1,12 @@
 import { Edit, Sparkle } from "lucide-react";
 import React, { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
+import ReactMarkdown from "react-markdown";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+
 const articleLength = [
   { length: 800, text: "Short (500-800 words)" },
   { length: 1200, text: "Short (800-1200 words)" },
@@ -19,26 +25,27 @@ const WriteArticls = () => {
     if (!input.trim()) return;
 
     setIsLoading(true);
+    const prompt = `Write an article about ${input} in ${selectedLength.text} `;
     try {
       const token = await getToken();
-      const response = await fetch(
-        "http://localhost:4000/api/ai/generate-article",
+
+      const { data } = await axios.post(
+        `${BASE_URL}/api/ai/generate-article`,
         {
-          method: "POST",
+          prompt: prompt,
+          length: selectedLength.length,
+        },
+        {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            prompt: input,
-            length: selectedLength.length,
-          }),
         }
       );
-
-      const data = await response.json();
+      console.log("Backend response:", data);
 
       if (data.success) {
+        toast.success("Article Generated Successfully");
         setGeneratedArticle(data.content);
       } else {
         alert(data.message || "Failed to generate article");
@@ -98,18 +105,21 @@ const WriteArticls = () => {
       </form>
 
       {/*Right side*/}
-      <div className="w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 min-h-96 max-h-[600px]">
+      <div className="w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 min-h-[400px] max-h-[600px]">
+        {/* Header */}
         <div className="flex items-center gap-3">
           <Edit className="w-5 h-5 text-[#4A7AFF]" />
           <h1 className="text-xl font-semibold">Generated Article</h1>
         </div>
-        <div className="flex-1 flex justify-center items-center">
+
+        {/* Scrollable content */}
+        <div className="flex-1 mt-3 overflow-y-auto text-sm text-slate-600 whitespace-pre-wrap break-words">
           {generatedArticle ? (
-            <div className="w-full h-full p-4 text-sm text-gray-700 whitespace-pre-wrap overflow-y-auto">
-              {generatedArticle}
-            </div>
+            <div className=".reset-tw">
+              <ReactMarkdown>{generatedArticle}</ReactMarkdown>
+            </div> // wrap in a div for safety
           ) : (
-            <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
+            <div className="flex flex-col items-center gap-5 text-gray-400">
               <Edit className="w-9 h-9" />
               <p>Enter a topic and click "Generate Article" to get started</p>
             </div>

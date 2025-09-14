@@ -6,6 +6,7 @@ import axios from "axios";
 import fs from "fs";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import { v2 as cloudinary } from "cloudinary";
+import FormData from "form-data";
 dotenv.config();
 
 const openai = new OpenAI({
@@ -93,12 +94,12 @@ export const generateBlogTitles = async (req, res) => {
     const plan = req.plan;
     const free_usage = req.free_usage;
 
-    if (plan != "premium" && free_usage >= 10) {
-      return res.json({
-        success: false,
-        message: "Limit exceeded. Upgrade to continue.",
-      });
-    }
+    // if (plan != "premium" && free_usage >= 10) {
+    //   return res.json({
+    //     success: false,
+    //     message: "Limit exceeded. Upgrade to continue.",
+    //   });
+    // }
     const response = await openai.chat.completions.create({
       model: "gemini-2.0-flash",
       messages: [
@@ -108,7 +109,7 @@ export const generateBlogTitles = async (req, res) => {
         },
       ],
       temperature: 0.7,
-      max_tokens: 100,
+      max_tokens: 300,
     });
 
     const content = response.choices[0].message.content;
@@ -133,23 +134,18 @@ export const generateImage = async (req, res) => {
   try {
     const { userId } = req.auth;
     const { prompt, publish } = req.body;
-    const plan = req.plan;
-    const free_usage = req.free_usage;
-
-    // if (plan != "premium") {
-    //   return res.json({
-    //     success: false,
-    //     message: "Only premium users can generate images, please upgrade.",
-    //   });
-    // }
 
     const formData = new FormData();
     formData.append("prompt", prompt);
+
     const response = await axios.post(
       "https://clipdrop-api.co/text-to-image/v1",
       formData,
       {
-        headers: { "x-api-key": process.env.CLIPDROP_API_KEY },
+        headers: {
+          ...formData.getHeaders(),
+          "x-api-key": process.env.CLIPDROP_API_KEY,
+        },
         responseType: "arraybuffer",
       }
     );
@@ -158,10 +154,29 @@ export const generateImage = async (req, res) => {
       response.data,
       "binary"
     ).toString("base64")}`;
-    const { secure_url } = await cloudinary.uploader.upload(base64Image);
+    console.log("✅ Base64 image created, length:", base64Image.length);
+
+    const uploadResult = await cloudinary.uploader.upload(base64Image, {
+      folder: "ai-images",
+    });
+    console.log("✅ Cloudinary upload result:", uploadResult);
+
+    const secure_url = uploadResult.secure_url;
+    console.log("✅ Secure URL:", secure_url);
+
+    // Save to database
+    try {
+      await sql`insert into creations(user_id, prompt, content, type) 
+        values(${userId}, ${prompt}, ${secure_url}, ${"image"})`;
+      console.log("✅ Image saved to database successfully");
+    } catch (dbError) {
+      console.error("❌ Database error:", dbError);
+    }
+
+    console.log("🚀 Sending response:", { success: true, secure_url });
     res.json({ success: true, secure_url });
   } catch (error) {
-    console.log(error.message);
+    console.error("Generate image error:", error);
     res.json({ success: false, message: error.message });
   }
 };
@@ -169,7 +184,7 @@ export const generateImage = async (req, res) => {
 export const removeImageBackground = async (req, res) => {
   try {
     const { userId } = req.auth;
-    const { image } = req.body;
+    const file = req.file;
     const plan = req.plan;
 
     // if (plan != "premium") {
@@ -179,7 +194,7 @@ export const removeImageBackground = async (req, res) => {
     //   });
     // }
 
-    const { secure_url } = await cloudinary.uploader.upload(image.path, {
+    const { secure_url } = await cloudinary.uploader.upload(file.path, {
       transformation: [
         {
           effect: "background_removal",
@@ -201,23 +216,29 @@ export const removeImageObject = async (req, res) => {
   try {
     const { userId } = req.auth;
     const { object } = req.body;
-    const { image } = req.file;
+    const file = req.file; // multer puts the uploaded file here
     const plan = req.plan;
 
-    // if (plan != "premium") {
-    //   return res.json({
-    //     success: false,
-    //     message: "Only premium users can generate images, please upgrade.",
-    //   });
-    // }
+    if (!file) {
+      return res.json({ success: false, message: "No image uploaded" });
+    }
+    if (!object) {
+      return res.json({
+        success: false,
+        message: "No object specified to remove",
+      });
+    }
 
-    const { public_id } = await cloudinary.uploader.upload(image.path);
+    // Upload original file to Cloudinary
+    const { public_id } = await cloudinary.uploader.upload(file.path);
 
+    // Apply object removal transformation
     const imageUrl = cloudinary.url(public_id, {
       transformation: [{ effect: `gen_remove:${object}` }],
       resource_type: "image",
     });
 
+    // Save result in DB
     await sql`insert into creations(user_id, prompt, content, type) 
       values(${userId}, ${`remove ${object} from the image`}, ${imageUrl}, ${"image"})`;
 
@@ -227,58 +248,48 @@ export const removeImageObject = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
 export const reviewResume = async (req, res) => {
   try {
     const { userId } = req.auth;
     const resume = req.file;
     const plan = req.plan;
 
-    // if (plan != "premium") {
-    //   return res.json({
-    //     success: false,
-    //     message: "Only premium users can generate images, please upgrade.",
-    //   });
-    // }
+    if (!resume) {
+      return res.json({ success: false, message: "No resume uploaded" });
+    }
 
     if (resume.size > 5 * 1024 * 1024) {
-      return req.json({
+      return res.json({
         success: false,
-        message: "Resume size is greater that 5 mb.",
+        message: "Resume size is greater than 5 MB.",
       });
     }
 
-    const { public_id } = await cloudinary.uploader.upload(image.path);
-
-    const imageUrl = cloudinary.url(public_id, {
-      transformation: [{ effect: `gen_remove:${object}` }],
-      resource_type: "image",
-    });
-
+    // Read PDF file
     const dataBuffer = fs.readFileSync(resume.path);
     const pdfData = await pdf(dataBuffer);
 
-    const prompt = `Review the following resume and provide constructive feedback on it's strengths, weaknesses, and areas of improvements. Resume content : \n\n${pdfData.text}`;
+    // Build prompt
+    const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses, and areas of improvement:\n\n${pdfData.text}`;
 
+    // Call Gemini/OpenAI
     const response = await openai.chat.completions.create({
       model: "gemini-2.0-flash",
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
       max_tokens: 1000,
     });
 
     const content = response.choices[0].message.content;
 
+    // Save result to DB
     await sql`insert into creations(user_id, prompt, content, type) 
       values(${userId}, ${"Review the uploaded resume"}, ${content}, ${"resume-review"})`;
 
-    res.json({ success: true, content: content });
+    res.json({ success: true, content });
   } catch (error) {
-    console.log(error.message);
+    console.error("❌ Resume Review Error:", error.message);
     res.json({ success: false, message: error.message });
   }
 };

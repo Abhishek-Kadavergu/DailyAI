@@ -10,9 +10,8 @@ testRouter.get("/user-plan", auth, (req, res) => {
     userId: req.auth.userId,
     plan: req.plan,
     free_usage: req.free_usage,
-    message: `User is ${req.plan} with usage: ${req.free_usage}`
+    message: `User is ${req.plan} with usage: ${req.free_usage}`,
   });
 });
 
 export default testRouter;
-

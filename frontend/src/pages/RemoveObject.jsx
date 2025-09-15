@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 const RemoveObject = () => {
   const [image, setImage] = useState(null);
   const [objectName, setObjectName] = useState("");
@@ -47,7 +49,7 @@ const RemoveObject = () => {
       formData.append("object", objectName);
 
       const response = await axios.post(
-        "http://localhost:4000/api/ai/remove-image-object",
+        `${BASE_URL}/api/ai/remove-image-object`,
         formData,
         {
           headers: {
@@ -221,7 +223,7 @@ const RemoveObject = () => {
           <h1 className="text-xl font-semibold">Processed Image</h1>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center items-center">
+        <div className="flex-1 flex flex-col justify-center items-center text-gray-400">
           {isLoading ? (
             <div className="text-sm flex flex-col items-center gap-5">
               <div className="animate-spin rounded-full h-9 w-9 border-b-2 border-[#4A7AFF]"></div>
@@ -236,7 +238,7 @@ const RemoveObject = () => {
               />
             </div>
           ) : (
-            <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
+            <div className="text-sm flex flex-col items-center gap-5">
               <div className="relative">
                 <Scissors className="w-9 h-9 animate-pulse" />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>

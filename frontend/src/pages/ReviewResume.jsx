@@ -10,15 +10,12 @@ const ReviewResume = () => {
   const [analysisResult, setAnalysisResult] = useState(null);
   const { getToken } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState("");
-  const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
 
   const onFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setResumeFile(file);
-      setError(null);
     }
   };
 
@@ -47,9 +44,7 @@ const ReviewResume = () => {
 
       if (allowedTypes.includes(file.type)) {
         setResumeFile(file);
-        setError(null);
       } else {
-        setError("Please upload a PDF or DOCX file only.");
       }
     }
   };
@@ -120,29 +115,46 @@ const ReviewResume = () => {
         {/* Button */}
         <button
           type="submit"
-          className="flex w-full justify-center gap-2 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 mt-6 text-sm rounded-lg cursor-pointer"
+          disabled={isLoading}
+          className={`flex w-full justify-center gap-2 bg-gradient-to-r from-[#226BFF] to-[#65ADFF] text-white px-4 py-2 mt-6 text-sm rounded-lg ${
+            isLoading
+              ? "opacity-50 cursor-not-allowed"
+              : "cursor-pointer hover:from-[#1a5bff] hover:to-[#4a9dff]"
+          }`}
         >
           <FileText className="mx-4" />
-          {isLoading ? "Reviewing Resume..." : "Review Resume"}
+          {isLoading ? "Analyzing..." : "Review Resume"}
         </button>
       </form>
 
       {/* Right Side */}
-      <div className="w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 min-h-96 max-h-[600px]">
-        <div className="flex items-center gap-3">
+      <div className="w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 h-[600px]">
+        <div className="flex items-center gap-3 mb-3">
           <FileText className="w-5 h-5 text-[#4A7AFF]" />
           <h1 className="text-xl font-semibold">Analysis Results</h1>
         </div>
 
-        <div className="flex-1 mt-3 overflow-y-auto text-sm text-slate-600 whitespace-pre-wrap break-words">
-          {analysisResult ? (
-            <div className=".reset-tw">
-              <ReactMarkdown>{analysisResult}</ReactMarkdown>
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-hidden">
+          {isLoading ? (
+            <div className="h-full flex flex-col justify-center items-center text-gray-400">
+              <div className="text-sm flex flex-col items-center gap-5">
+                <div className="animate-spin rounded-full h-9 w-9 border-b-2 border-[#4A7AFF]"></div>
+                <p>Analyzing your resume...</p>
+              </div>
+            </div>
+          ) : analysisResult ? (
+            <div className="h-full overflow-y-auto text-sm text-slate-600 whitespace-pre-wrap break-words pr-2">
+              <div className=".reset-tw">
+                <ReactMarkdown>{analysisResult}</ReactMarkdown>
+              </div>
             </div>
           ) : (
-            <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
-              <FileText className="w-9 h-9" />
-              <p>Upload a resume and click "Review Resume" to get started</p>
+            <div className="h-full flex flex-col justify-center items-center text-gray-400">
+              <div className="text-sm flex flex-col items-center gap-5">
+                <FileText className="w-9 h-9" />
+                <p>Upload a resume and click "Review Resume" to get started</p>
+              </div>
             </div>
           )}
         </div>

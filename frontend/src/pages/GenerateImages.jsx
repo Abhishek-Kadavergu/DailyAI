@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 const styles = [
   "Realistic",
   "Ghibli style",
@@ -42,7 +44,7 @@ const GenerateImages = () => {
       const prompt = `${input}  ${selectedStyle.toLowerCase()} style, high quality, detailed`;
 
       const response = await axios.post(
-        "http://localhost:4000/api/ai/generate-image",
+        `${BASE_URL}/api/ai/generate-image`,
         { prompt, publish: isPublic },
         {
           headers: {
@@ -209,7 +211,7 @@ const GenerateImages = () => {
           <h1 className="text-xl font-semibold">Generated Image</h1>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center items-center">
+        <div className="flex-1 flex flex-col justify-center items-center text-gray-400">
           {isLoading ? (
             <div className="text-sm flex flex-col items-center gap-5">
               <div className="animate-spin rounded-full h-9 w-9 border-b-2 border-[#4A7AFF]"></div>
@@ -224,7 +226,7 @@ const GenerateImages = () => {
               />
             </div>
           ) : (
-            <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
+            <div className="text-sm flex flex-col items-center gap-5">
               <div className="relative">
                 <ImageIcon className="w-9 h-9 animate-pulse" />
                 {/* <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full "></div> */}

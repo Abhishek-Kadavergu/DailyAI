@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS creations (
     prompt TEXT NOT NULL,
     content TEXT NOT NULL,
     type VARCHAR(50) NOT NULL DEFAULT 'article',
+    publish BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -20,4 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_creations_type ON creations(type);
 
 -- Create an index on created_at for sorting
 CREATE INDEX IF NOT EXISTS idx_creations_created_at ON creations(created_at);
+
+-- Create an index on publish for filtering published content
+CREATE INDEX IF NOT EXISTS idx_creations_publish ON creations(publish);
 

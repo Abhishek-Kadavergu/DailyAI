@@ -3,6 +3,8 @@ import { Hash, Sparkle } from "lucide-react";
 import React, { useState } from "react";
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
+
 const categories = [
   "General",
   "Technology",
@@ -32,7 +34,7 @@ const BlogTitles = () => {
       const prompt = `Generate 5 creative and engaging blog post titles about "${input}" in the ${selectedCategory} category. Each title should be unique, compelling, and optimized for SEO. Return only the titles, one per line, without numbering or bullet points.`;
 
       const response = await axios.post(
-        "http://localhost:4000/api/ai/generate-blog-titles",
+        `${BASE_URL}/api/ai/generate-blog-titles`,
         { prompt },
         {
           headers: {

@@ -162,12 +162,12 @@ const RemoveObject = () => {
 
         {/* File preview */}
         {previewUrl && (
-          <div className="mt-4">
+          <div className="mt-4 ">
             <p className="text-sm font-medium mb-2">Preview:</p>
             <img
               src={previewUrl}
               alt="Preview"
-              className="w-full max-h-32 object-cover rounded-md border"
+              className="w-[auto] h-[200px] object-cover rounded-md border mx-auto"
             />
           </div>
         )}

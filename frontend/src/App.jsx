@@ -11,14 +11,17 @@ import RemoveObject from "./pages/RemoveObject";
 import ReviewResume from "./pages/ReviewResume";
 import Community from "./pages/Community";
 import { useAuth } from "@clerk/clerk-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
+  const hasFetched = useRef(false);
   useEffect(() => {
-    getToken().then((token) => console.log(token));
-  }, []);
+    if (!isSignedIn || hasFetched.current) return;
+    hasFetched.current = true;
+    getToken().catch(() => {});
+  }, [isSignedIn, getToken]);
 
   return (
     <div>
@@ -29,12 +32,11 @@ const App = () => {
           <Route index element={<Dashboard />} />
           <Route path="write-article" element={<WriteArticls />} />
           <Route path="blog-titles" element={<BlogTitles />} />
-          <Route path="generate-images" element={<GenerateImages />} />"
-          <Route path="remove-background" element={<RemoveBackground />} />"
-          <Route path="remove-object" element={<RemoveObject />} />"
-          <Route path="remove-background" element={<ReviewResume />} />"
-          <Route path="review-resume" element={<ReviewResume />} />"
-          <Route path="community" element={<Community />} />"
+          <Route path="generate-images" element={<GenerateImages />} />
+          <Route path="remove-background" element={<RemoveBackground />} />
+          <Route path="remove-object" element={<RemoveObject />} />
+          <Route path="review-resume" element={<ReviewResume />} />
+          <Route path="community" element={<Community />} />
         </Route>
       </Routes>
     </div>

@@ -9,8 +9,8 @@ const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
 
 const articleLength = [
   { length: 800, text: "Short (500-800 words)" },
-  { length: 1200, text: "Short (800-1200 words)" },
-  { length: 1600, text: "Short (1200-1600 words)" },
+  { length: 1200, text: "Medium (800-1200 words)" },
+  { length: 1600, text: "Long (1200-1600 words)" },
 ];
 
 const WriteArticls = () => {
@@ -25,7 +25,7 @@ const WriteArticls = () => {
     if (!input.trim()) return;
 
     setIsLoading(true);
-    const prompt = `Write an article about ${input} in ${selectedLength.text} `;
+    const prompt = `Write an article about ${input} in ${selectedLength.text} words. `;
     try {
       const token = await getToken();
 

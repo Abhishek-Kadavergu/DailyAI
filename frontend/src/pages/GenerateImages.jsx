@@ -232,7 +232,7 @@ const GenerateImages = () => {
           {isLoading ? (
             <div className="text-sm flex flex-col items-center gap-5">
               <div className="animate-spin rounded-full h-9 w-9 border-b-2 border-[#4A7AFF]"></div>
-              <p>Generating creative images...</p>
+              <p>Generating Imgae...</p>
             </div>
           ) : generatedImage ? (
             <div className="flex flex-col items-center gap-4 mt-4 animate-fadeIn">

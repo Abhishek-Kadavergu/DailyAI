@@ -30,7 +30,7 @@ const WriteArticls = () => {
       const token = await getToken();
 
       const { data } = await axios.post(
-        `${BASE_URL}/api/ai/generate-article`,
+        `https://daily-ai-xi.vercel.app//api/ai/generate-article`,
         {
           prompt: prompt,
           length: selectedLength.length,

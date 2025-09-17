@@ -21,6 +21,15 @@ const App = () => {
     if (!isSignedIn || hasFetched.current) return;
     hasFetched.current = true;
     getToken().catch(() => {});
+    const fetchToken = async () => {
+      try {
+        const token = await getToken();
+        console.log("Clerk JWT Token:", token);
+      } catch (error) {
+        console.error("Error fetching token:", error);
+      }
+    };
+    fetchToken();
   }, [isSignedIn, getToken]);
 
   return (

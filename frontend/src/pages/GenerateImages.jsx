@@ -2,6 +2,7 @@ import { Image as ImageIcon, Sparkle, Download, Loader2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import axios from "axios";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const styles = [
   "Realistic",
@@ -61,7 +62,7 @@ const GenerateImages = () => {
       const prompt = `${input}  ${selectedStyle.toLowerCase()} style, high quality, detailed`;
 
       const response = await axios.post(
-        "http://localhost:4000/api/ai/generate-image",
+        `${BASE_URL}/api/ai/generate-image`,
         { prompt, publish: isPublic },
         {
           headers: {
